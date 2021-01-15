@@ -6,7 +6,7 @@ import (
 )
 
 const (
-    BaseURLV1 = " http://baton-2:8080/Baton/api/tasks/"
+    BaseURLV1 = "http://baton-2:8080/Baton/api/tasks/"
 )
 
 type Client struct {

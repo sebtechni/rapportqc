@@ -1,0 +1,82 @@
+http://baton-2:8080/Baton/@@home.html#Tasks/Tasks/All
+
+http://baton-2:8080/Baton/api/uptime
+
+http://baton-2:8080/Baton/api/tasks/search?status=Completed
+
+http://baton-2:8080/Baton/api/tasks/search?taskID=00000176d3dd4e5603687f91000a0063008a0046
+
+/Baton/api/testplans/<testplanname>/info
+
+http://baton-2:8080
+
+http://baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+
+ZGF1ZGVsczohTWljcm9icmFzc2VyaWUyMDIx
+
+dev_user:jhg45W&sd_18
+
+
+curl -i -X GET http://baton-2:8080/Baton/api/uptime
+
+
+curl -i -X POST -H 'Content-
+
+
+curl -i -X GET http://rest-api.io/items
+curl -i -X GET http://rest-api.io/items/5069b47aa892630aae059584
+curl -i -X DELETE http://rest-api.io/items/5069b47aa892630aae059584
+curl -i -X POST -H 'Content-Type: application/json' -d '{"name": "New item", "year": "2009"}' http://rest-api.io/items
+curl -i -X PUT -H 'Content-Type: application/json' -d '{"name": "Updated item", "year": "2010"}' http://rest-api.io/items/5069b47aa892630aae059584
+
+
+curl -i -X POST -H 'Content-type': 'application/x-www-form-urlencoded', 'Accept': '*/*', 'Authorization' : 'Basic ZGF1ZGVsczohTWljcm9icmFzc2VyaWUyMDIx' -d '{"name": "New item", "year": "2009"}' http://baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+
+'Content-type': 'application/x-www-form-urlencoded', 'Accept': '*/*', 'Authorization' : 'Basic %s' %  userAndPass
+
+http://dev_user:jhg45W&sd_18@baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+http://daudelins:ZGF1ZGVsaW5zOiFNaWNyb2JyYXNzZXJpZTIwMjE=@baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+
+
+curl -i -X POST -H 'Content-type: application/x-www-form-urlencoded', 'Authorization': u'Basic ZGF1ZGVsaW5zOiFNaWNyb2JyYXNzZXJpZTIwMjE=', 'Accept': '*/*'}
+
+
+curl --user daudelins:!Microbrasserie2021 http://baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+
+http://baton-2:8080/Baton/api/tasks/idlist
+
+
+curl -i -X POST -H 'Content-type': 'application/x-www-form-urlencoded', 'Authorization': u'Basic ZGF1ZGVsczohTWljcm9icmFzc2VyaWUyMDIx', 'Accept': '*/*' http://baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+execfile('x:/services_medias/users/daudels/work/baton/test/REST_Baton_verify.py')
+
+
+curl -i -X POST -H 'Content-type': 'application/x-www-form-urlencoded', 'Authorization': u'Basic ZGF1ZGVsczohTWljcm9icmFzc2VyaWUyMDIx', 'Accept': '*/*' http://baton-2:8080 -d 'testPlan=DSC+-+Source+AQC+-+Prores+HD-Progressive+-+V2&mediaFilePath=%5C%5Cvod%5Corion%5Cmashare%5CFiles_to_Ingest%5Cpgs%5Ca_ingester%5Calvin_s04%5C1071_20200414_alvin_s04e40_en_24p-25p%5Ca_ingester%5CALVIN_S004-E040_TXTL_PRHQ_1080-178_25p_XX_XX_R0_20200414-MTL.mov'
+
+curl -x POST -u "daudels:!Microbrasserie2021" http://baton-2:8080/Baton/api/tasks/00000176d3dd4e5603687f91000a0063008a0046/report?type=xml
+
+
+curl -i -X POST -u "daudels" -H 'Content-type:application/x-www-form-urlencoded' http://baton-2:8080/Baton/api/tasks/testPlan=DSC+-+Source+AQC+-+Prores+HD-Progressive+-+V2&mediaFilePath=%5C%5Cvod%5Corion%5Cmashare%5CFiles_to_Ingest%5Cpgs%5Ca_ingester%5Calvin_s04%5C1071_20200414_alvin_s04e40_en_24p-25p%5Ca_ingester%5CALVIN_S004-E040_TXTL_PRHQ_1080-178_25p_XX_XX_R0_20200414-MTL.mov
+
+
+=====================================================
+
+curl -i -X POST -u "daudels" -H 'Content-type:application/x-www-form-urlencoded' http://baton-2:8080/Baton/api/tasks/ -d 'testPlan=DSC+-+Source+AQC+-+Prores+HD-Progressive+-+V2&mediaFilePath=%5C%5Cvod%5Corion%5Cmashare%5CFiles_to_Ingest%5Cpgs%5Ca_ingester%5Calvin_s04%5C1071_20200414_alvin_s04e40_en_24p-25p%5Ca_ingester%5CALVIN_S004-E040_TXTL_PRHQ_1080-178_25p_XX_XX_R0_20200414-MTL.mov'
+
+curl -i -X GET -u daudels:\!Microbrasserie2021r -H 'Content-type:application/x-www-form-urlencoded' http://baton-2:8080/Baton/api/tasks/00000176e33b7de348c2b333000a0063008a0046/report?type=xml
+
+curl -i -X GET -u "daudels" -H 'Content-type:application/x-www-form-urlencoded' http://baton-2:8080/Baton/api/tasks/search?source=API
+
+
+
+
+====
+PDF
+wkhtmltopdf --enable-local-file-access X:\services_medias\users\daudels\work\baton\racing_stripes_qc_report.htm X:\services_medias\users\daudels\work\baton\hello2.pdf 
+border: 1px solid lightgray!important;
+
+go run C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
