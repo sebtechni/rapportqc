@@ -1,0 +1,26 @@
+NOTE BATON READER
+--
+
+Source TC
+Source Audio Config
+
+Trl # et pass #
+Revision #
+
+Additional Asset
+
+Asset Language
+Audio Language
+Text Presence
+Sub presence
+
+Main title
+
+Credit TCs
+TXTL tcs
+
+Logos
+
+
+
+FIXED ISSU
