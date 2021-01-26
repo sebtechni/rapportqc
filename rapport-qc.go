@@ -1,6 +1,10 @@
 package main
 
 import (
+	"github.com/resty"	
+	"log"
+	"encoding/xml"	
+	
 	// "fmt"
 	// "encoding/xml"
 	// "time"	
@@ -11,14 +15,13 @@ import (
 	//"strconv"
 	// "path"
 	//"encoding/json"	
-	//"io/ioutil"
-	"github.com/resty"	
+	//"io/ioutil"	
 	//"os/exec"
 	//"net/http"
-	"log"
-	"encoding/xml"
 	//"reflect"
-	"rapport-qc/lib"
+	//"rapport-qc/lib"
+
+
 )
 
 type StartTimeCodeSMPTE struct {
@@ -106,8 +109,22 @@ type TaskReport struct {
 	Toplevelinfo		Toplevelinfo				`xml:"toplevelinfo"`
 	Streamnode  		[]Streamnode				`xml:"streamnode"`
 }
+//--------------------------------------------------------------------------------------------
+//var TEST string = "LLL"
 
-var TEST string = "LLL"
+type GENCOM struct {
+	CODE	[]string		`default:"[\"fesg\", \"t5jhyhgd\", \"eth5\"]"`
+	VALUE	[]string		`default:"[\"htrjryj\", \"sae4rg45\", \"sgfnty\"]"`
+}
+
+type QCInfos struct {
+	TITLE		string			`default:"John Smith"`
+	FILENAME	[]string		`default:"[\"HAHA\", \"fefe\", \"efe\"]"`
+	GENCOM		GENCOM			
+}
+
+
+
 
 func main() {
 //00000176e33b7de348c2b333000a0063008a0046
@@ -117,9 +134,9 @@ func main() {
 	
 		log.Println(v)
 
-		lib.WriteHTML()
+		//lib.WriteHTML()
 
-		log.Println(TEST)
+		//log.Println(TEST)
 }
 
 func RestCall(BatonTaskId string) []byte {
