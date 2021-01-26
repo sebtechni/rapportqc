@@ -7,8 +7,8 @@ import (
 	"defaults"
 	"go-wkhtmltopdf"
 	"log"
-	"io/ioutil"	
-	"strings"
+	//"io/ioutil"	
+	//"strings"
 	
 )
 
@@ -84,25 +84,41 @@ func main() {
 	if err != nil {
 	  log.Fatal(err)
 	}
-	// Set global options
-	pdfg.Dpi.Set(300)
-	pdfg.Orientation.Set(wkhtmltopdf.OrientationLandscape)
-	pdfg.Grayscale.Set(true)
 
-	htmlfile, err := ioutil.ReadFile("C:/Users/daudels/go/src/rapport-qc/template_qc_report.htm")
+	// htmlfile, err := ioutil.ReadFile("C:/Users/daudels/go/src/rapport-qc/template_qc_report.htm")
+	// if err != nil {
+	// log.Fatal(err)
+	// }
+
+	// pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(string(htmlfile))))
+	// err = pdfg.Create()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	
+	// err = pdfg.WriteFile("./testfiles/TestGeneratePdfFromStdinSimple.pdf")
+	// if err != nil {
+	//   log.Fatal(err)
+	// }
+
+	// fmt.Println(pdfg.ArgString())
+	htmlfile, err := os.Open("C:/Users/daudels/go/src/rapport-qc/template_qc_report.htm")
 	if err != nil {
-	log.Fatal(err)
+		log.Fatal(err)
 	}
+	defer htmlfile.Close()
 
-	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(string(htmlfile))))
+	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/TestPDFGeneratorOutputFile.pdf"
+	
+	pdfg.AddPage(wkhtmltopdf.NewPageReader(htmlfile))
+	page := wkhtmltopdf.NewPageReader(htmlfile)
+	page.EnableLocalFileAccess.Set(true)
+	pdfg.AddPage(page)
 	err = pdfg.Create()
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = pdfg.WriteFile("C:/Users/daudels/go/src/template_test/simplesample.pdf")
-	if err != nil {
-	  log.Fatal(err)
-	}
+
 }
 
 
@@ -113,3 +129,4 @@ func main() {
 // 		{Name: "Alice", Email: "alice@myco.com"},
 // 	},
 // }
+
