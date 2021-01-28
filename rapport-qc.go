@@ -15,7 +15,7 @@ import (
 	"strings"
 	// "xlsx"	
 	// "os"
-	//"strconv"
+	"strconv"
 	// "path"
 	//"encoding/json"	
 	// "io/ioutil"	
@@ -40,7 +40,7 @@ type DropFrameFlag struct {
 }
 
 type ChromaBitDepth struct {
-	Value			int8				`xml:"value,attr"`
+	Value			string				`xml:"value,attr"`
 }
 
 type TimeCodeTrack struct {
@@ -73,6 +73,7 @@ type Error struct {
 	Item						string			`xml:"item,attr"`
 	Startsmptetimecode			string			`xml:"startsmptetimecode,attr"`
 	Synopsis					string			`xml:"synopsis,attr"`
+	Severity					string			`xml:"severity,attr"`
 }
 
 type Decodedaudiochecks struct {
@@ -99,7 +100,7 @@ type Streamnode struct {
 	Name					string				`xml:"name,attr"`
 	Info					Info				`xml:"info"`
 	Errors					Errors				`xml:"errors"`	
-
+	Id						string				`xml:"id,attr"`	
 }
 
 type Toplevelinfo struct {
@@ -117,7 +118,7 @@ type TaskReport struct {
 
 type QCInfos struct {
 	TITLE					string			`default:" "`
-	PROVIDER				string			`default:"AYTRE!"`
+	PROVIDER				string			`default:" "`
 	VALIDATION_TYPE			string			`default:" "`
 	VERSION					string			`default:" "`
 	DATE					string			`default:" "`
@@ -137,7 +138,7 @@ type QCInfos struct {
 	TEXT_PRES				string			`default:" "`
 	SUB_PRES				string			`default:" "`
 	RUN_TIME				string			`default:" "`
-	FILESIZE				string			`default:" "`
+	FILESIZE				int				`default:"0"`
 	BITRATE					string			`default:" "`
 	DIF_RATE				string			`default:" "`
 	SRC_RATE				string			`default:" "`
@@ -145,7 +146,7 @@ type QCInfos struct {
 	RATIO					string			`default:" "`
 	PXLRATIO				string			`default:" "`
 	CODEC					string			`default:" "`
-	RANGE					string			`default:" "`
+	RANGE					string			`default:"SDR"`
 	COLORSAMPLE				string			`default:" "`
 	AUDIOSAMPLE				string			`default:" "`
 	AUDIO_BIT				string			`default:" "`
@@ -262,35 +263,118 @@ type TEXT_ISSUES struct {
 func main() {
 //00000176e33b7de348c2b333000a0063008a0046
 //0000016e3d423cb80b853502000a0063008a0046
-		var Baton TaskReport
-		QC := &QCInfos{}
-		if err := defaults.Set(QC); err != nil {
-			panic(err)
+// Ninja : 000001773fad7fcbb1a120a5000a0063008a0046
+// Little pony : 000001773fb05f7075d7893e000a0063008a0046
+	var Baton TaskReport
+	QC := &QCInfos{}
+	if err := defaults.Set(QC); err != nil {
+		panic(err)
+	}
+	QC = Init(QC)
+
+	xml.Unmarshal(RestCall("000001773fb05f7075d7893e000a0063008a0046"), &Baton)
+
+	for _, Field := range Baton.Streamnode[0].Info.Field {
+		if Field.Name == "MP4::TimeCodeTrack" {
+			QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
+			QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
+
 		}
-		log.Println(QC)
-
-		QC = Init(QC)
-
-
-		xml.Unmarshal(RestCall("0000016e3d423cb80b853502000a0063008a0046"), &Baton)
+		if Field.Name == "FileSize" {
+			Size, _ := strconv.Atoi(Field.Value)
+			QC.FILESIZE = ByteToMB(Size)
+		}
+		if Field.Name == "Container::Bitrate" {			
+			QC.BITRATE = Field.Value
+		}
+	}
+	for _, Field := range Baton.Streamnode[1].Info.Field {		
+		if Field.Name == "Frame Rate" {			
+			QC.DIF_RATE = Field.Value
+		}
+		if Field.Name == "Resolution" {			
+			QC.RESOLUTION = Field.Value
+		}
+		if Field.Name == "ProresCodecType" {			
+			QC.CODEC = Field.Value
+		}
+		if Field.Name == "Sample Aspect Ratio" {			
+			QC.PXLRATIO = Field.Value
+		}
+		if Field.Name == "Bits Per Pixel" {			
+			QC.VID_BIT = Field.ChromaBitDepth.Value+" bits"
+		}
+		if Field.Name == "Chroma Format" {				
+			QC.COLORSAMPLE = Field.Value
+		}
+	}	
+	for _, Field := range Baton.Streamnode[2].Info.Field {		
+		if Field.Name == "Sampling Frequency" {	
+			Sample, _ := strconv.Atoi(Field.Value)			
+			QC.AUDIOSAMPLE = strconv.Itoa(Sample/1000)+" KHz"
+		}
+		if Field.Name == "Bits per sample" {			
+			QC.AUDIO_BIT = Field.Value+" bits"
+		}
+		if Field.Name == "Audio Channels" {			
+			if Field.Value == "2" {
+				QC.DIF_CH[1] = "STEREO LEFT"
+				QC.DIF_CH[2] = "STEREO RIGHT"
+			} else {
+				QC.DIF_CH[1] = "5.1 LEFT"
+				QC.DIF_CH[2] = "5.1 RIGHT"
+				QC.DIF_CH[3] = "5.1 CENTER"
+				QC.DIF_CH[4] = "5.1 CENTER"
+				QC.DIF_CH[5] = "5.1 LEFT SURROUND"
+				QC.DIF_CH[6] = "5.1 RIGHT SURROUND"
+				QC.DIF_CH[7] = "LEFT TOTAL"
+				QC.DIF_CH[8] = "RIGHT TOTAL"
+			}
+		}
+	}
+	ErrorIDX := 0
+	for _, Error := range Baton.Streamnode[1].Errors.Customchecks.Decodedvideochecks.Error {
+		QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+		QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 		= Error.Item
+		QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+		QC.PRIM_ISSUES[ErrorIDX].ISVIDEO_PRIM 		= "x"
+		QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+		ErrorIDX++
+	}
 	
-		log.Println(Baton)
-
-		
-		Template := template.Must(template.ParseFiles("C:/Users/daudels/go/src/template_test/qc_report_for_test.tmpl"))
-		//fmt.Println(Template.Execute(os.Stdout, QC))
-		
-		var tpl bytes.Buffer
-		if err := Template.Execute(&tpl, QC); err != nil {
-			log.Println(err)
+	for _, Node := range Baton.Streamnode {
+		if Node.Name == "LPCM Audio" {			 
+			for _, Error := range Node.Errors.Customchecks.Decodedaudiochecks.Error {
+				QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+				QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
+				QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+				QC.PRIM_ISSUES[ErrorIDX].ISAUDIO_PRIM 		= "x"
+				QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+				QC.PRIM_ISSUES[ErrorIDX].CHAN_PRIM 			= Node.Id
+				ErrorIDX++
+			}
 		}
-		RapportFinal := tpl.String()
+	}
 
-		PDF(RapportFinal)
-		log.Println("PDF is OUT!")
-		//lib.WriteHTML()
 
-		//log.Println(TEST)
+	//QC.RUN_TIME = Baton.
+	//log.Println(Baton)
+
+	
+	Template := template.Must(template.ParseFiles("C:/Users/daudels/go/src/template_test/qc_report_for_test.tmpl"))
+	//fmt.Println(Template.Execute(os.Stdout, QC))
+	
+	var tpl bytes.Buffer
+	if err := Template.Execute(&tpl, QC); err != nil {
+		log.Println(err)
+	}
+	RapportFinal := tpl.String()
+
+	PDF(RapportFinal)
+	log.Println("PDF is OUT!")
+	//lib.WriteHTML()
+
+	//log.Println(TEST)
 }
 
 func RestCall(BatonTaskId string) []byte {
@@ -340,3 +424,20 @@ func Init(QCChamps *QCInfos) *QCInfos {
 	}	
 	return QCChamps
 	}
+
+func ByteToMB(b int) int {
+	return (b/(1024*1024))
+}	
+
+func Scale(BatonScale string) string {
+	switch BatonScale {
+		case "Fatal":
+			return "1"
+		case "Warning":
+			return "3"
+		case "Serious":
+			return "2"
+		default:
+			return "FYI"			
+	}
+}
