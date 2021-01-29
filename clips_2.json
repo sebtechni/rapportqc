@@ -1,0 +1,390 @@
+{
+        "ID":420127,
+        "seqNo":45,
+        "catalogID":386763,
+        "userID":0,
+        "userName":"Administrator",
+        "type":"clip",
+        "typeID":10,
+        "typeName":"Movie",
+        "name":"mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov",
+        "notes":null,
+        "status":null,
+        "bin":"_pret_pour_qc",
+        "format":"QT Movie (Apple ProRes 422 (HQ))",
+        "fps":23.976,
+        "in":{
+            "frm":86376,
+            "fmt":2398,
+            "secs":3602.602602602603,
+            "txt":"0:59:59:00"
+        },
+        "out":{
+            "frm":118143,
+            "fmt":2398,
+            "secs":4927.552552552553,
+            "txt":"1:22:02:15"
+        },
+        "duration":{
+            "frm":31767,
+            "fmt":2398,
+            "secs":1324.94994994995,
+            "txt":"0:22:03:15"
+        },
+        "marked":false,
+        "hidden":false,
+        "orientation":0,
+        "good":null,
+        "rating":0,
+        "posterID":420179,
+        "transition":null,
+        "pos":8,
+        "markers":[
+            {
+                "name":"AliasingVQ",
+                "category":"Serious",
+                "in":{
+                    "frm":88690,
+                    "fmt":2398,
+                    "secs":3699.115782449116,
+                    "txt":"1:01:35:10"
+                },
+                "description":"Aliasing Description",
+                "color":"orange"
+            },
+            {
+                "name":"Duplicate Frames",
+                "category":"Fatal",
+                "in":{
+                    "frm":90767,
+                    "fmt":2398,
+                    "secs":3785.744077410744,
+                    "txt":"1:03:01:23"
+                },
+                "description":"Duplicate frame Description",
+                "color":"red"
+            },
+            {
+                "name":"Ghosting Artifact",
+                "category":"Warning",
+                "in":{
+                    "frm":94372,
+                    "fmt":2398,
+                    "secs":3936.102769436103,
+                    "txt":"1:05:32:04"
+                },
+                "description":"Ghosting Description",
+                "color":"yellow"
+            },
+            {
+                "name":"Audio Pop",
+                "category":"Serious",
+                "in":{
+                    "frm":96558,
+                    "fmt":2398,
+                    "secs":4027.2772772772773,
+                    "txt":"1:07:03:06"
+                },
+                "description":"Pop Description",
+                "color":"orange"
+            },
+            {
+                "name":"Audio Pop",
+                "category":"Serious",
+                "in":{
+                    "frm":98395,
+                    "fmt":2398,
+                    "secs":4103.895562228896,
+                    "txt":"1:08:19:19"
+                },
+                "description":"Pop Description",
+                "color":"orange"
+            }
+        ],
+        "importNotes":"Track vide/apch has 2 sample descs",
+        "clipref":"C5661A65",
+        "createdDate":1611681263661,
+        "modifiedDate":1611868726359,
+        "accessedDate":1611868730395,
+        "recordedDate":1598462131000,
+        "thumbnailIDs":[
+            420128,
+            420158,
+            420173,
+            420129,
+            420159,
+            420174,
+            420130,
+            420160,
+            420175,
+            420131,
+            420161,
+            420176,
+            420132,
+            420162,
+            420177,
+            420133,
+            420163,
+            420178,
+            420134,
+            420164,
+            420179,
+            420125,
+            420135,
+            420165,
+            420180,
+            420136,
+            420166,
+            420181,
+            420137,
+            420167,
+            420182,
+            420138,
+            420168,
+            420183,
+            420139,
+            420169,
+            420184,
+            420140,
+            420170,
+            420185,
+            420141,
+            420171,
+            420186
+        ],
+        "sourceMediaID":420124,
+        "catalog":{
+            "ID":386763,
+            "name":"client001_qc",
+            "groupID":386760,
+            "groupName":"dsc_client001",
+            "userID":0,
+            "userName":"Administrator",
+            "owner":"Administrator",
+            "fields":{
+
+            }
+        },
+        "media":{
+            "ID":420124,
+            "seqNo":3,
+            "filePath":"/mnt/ATLAS/catdv_poc/dsc/client001/qc/mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov",
+            "fileSize":28323160110,
+            "tape":null,
+            "videoFormat":"Apple ProRes 422 (HQ) (1920x1080 23.98fps)",
+            "audioFormat":"24-bit Integer (48.0 kHz, mono x8, 24 bit)",
+            "tracks":"vide/apch 1920x1080 (31767/1324.95s) [2x]\nsoun/in24 \"Sound Track 01 - L\" (63597534/1324.95s)\nsoun/in24 \"Sound Track 02 - R\" (63597534/1324.95s)\nsoun/in24 \"Sound Track 03 - C\" (63597534/1324.95s)\nsoun/in24 \"Sound Track 04 - Lfe\" (63597534/1324.95s)\nsoun/in",
+            "aspectRatio":1.77778,
+            "modifiedDate":1598480131000,
+            "start":{
+                "frm":86376,
+                "fmt":2398,
+                "secs":3602.602602602603,
+                "txt":"0:59:59:00"
+            },
+            "end":{
+                "frm":118143,
+                "fmt":2398,
+                "secs":4927.552552552553,
+                "txt":"1:22:02:15"
+            },
+            "tcFmt":2398,
+            "importer":"JQT",
+            "still":false,
+            "dataRate":0,
+            "archiveStatus":null,
+            "omfRef":null,
+            "qttc":86376,
+            "isMediaAvailable":true,
+            "fields":{
+                "MediaTimeScale":"23976",
+                "MediaHandler":"Apple Video Media Handler",
+                "TimeScale":"23976",
+                "MovieType":"Normal (not fast start)",
+                "FileType":"qt",
+                "FrameDuration":"31767x1000",
+                "PixelAspectRatio":"1/1",
+                "DataHandler":"Apple Alias Data Handler",
+                "TimecodeFormat":"24 nd 1000/23976",
+                "com.apple.finalcutstudio.media.uuid":"AE87BB40-1A54-49D1-ACFF-A83491063062",
+                "ApertureMode":"prod",
+                "kgtt":"sourceTC",
+                "com.apple.quicktime.player.movie.visual.brightness":"0.0",
+                "com.apple.quicktime.player.movie.audio.balance":"0.0",
+                "com.apple.quicktime.player.movie.visual.contrast":"1.0",
+                "com.apple.quicktime.player.movie.audio.gain":"1.0",
+                "com.apple.quicktime.player.movie.visual.tint":"0.0",
+                "WindowLocation":"(23,0)",
+                "com.apple.quicktime.player.movie.audio.bass":"0.0",
+                "com.apple.quicktime.player.movie.audio.pitchshift":"0.0",
+                "com.apple.quicktime.player.movie.visual.color":"1.0",
+                "com.apple.quicktime.version":"7.7.3 (2890.10) 0x7738000 (Mac OS X, 10.10.5, 14F2511)",
+                "SelectionOnly":"0",
+                "com.apple.quicktime.player.version":"7.6.6 (7.6.6)",
+                "com.apple.quicktime.player.movie.audio.treble":"0.0",
+                "com.apple.quicktime.player.movie.audio.mute":"00",
+                "AllFrames":"0"
+            }
+        },
+        "importSourceID":420187,
+        "importSource":{
+            "ID":420187,
+            "file":"/mnt/ATLAS/catdv_poc/dsc/client001/qc/mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov",
+            "modifiedDate":1599244948000,
+            "size":28323160110,
+            "importedDate":1611681262466,
+            "fields":{
+                "WorkerRoot":"/mnt/ATLAS/catdv_poc/dsc/client001/qc/_pret_pour_qc",
+                "AtomContainer":"ftyp qt mdat",
+                "FileExtension":"MOV",
+                "FileHash":"62250CEB8150B912",
+                "FileBegins":"00 00 00 20 66 74 79 70 71 74 20 20 20 05 03 00 ...",
+                "WorkerRelativePath":"/mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov"
+            }
+        },
+        "mediaStart":{
+            "frm":86376,
+            "fmt":2398,
+            "secs":3602.602602602603,
+            "txt":"0:59:59:00"
+        },
+        "mediaEnd":{
+            "frm":118143,
+            "fmt":2398,
+            "secs":4927.552552552553,
+            "txt":"1:22:02:15"
+        },
+        "fields":{
+            "titre":"My Little Pony",
+            "distributeur":"client001",
+            "qc.baton":"Finished",
+            "actif":"Online",
+            "po.#":"123456",
+            "dossier":"$r[1]",
+            "dossier.source":"mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov",
+            "nom.original":"mylittleponyfriendshipismagic_2019_s09e01_prhq_1080-sdr-178_23p_enUS-51-ltrt_enUS-t-x_v1r0.mov",
+            "saison":[
+                "09"
+            ],
+            "version":"Texted",
+            "provider":"eOne UK",
+            "qc.type":"Domestic QC",
+            "validation.type":"Conformed MEZZ",
+            "date":"2021-01-28",
+            "production.year":"2019",
+            "qc.operator":"Seb",
+            "facility":"Montreal",
+            "source.filename":"source_filename.mov",
+            "coordinator":"N/A",
+            "asset.type":"Episodic",
+            "audio.ch.1":"5.1 LEFT",
+            "audio.ch.2":"5.1 RIGHT",
+            "audio.ch.3":"5.1 CENTER",
+            "audio.ch.4":"5.1 LFE",
+            "audio.ch.5":"5.1 LEFT SURROUND",
+            "audio.ch.6":"5.1 RIGHT SURROUND",
+            "audio.ch.7":"STEREO LEFT",
+            "audio.ch.8":"STEREO RIGHT",
+            "création.de.rapports":[
+                "PDF (.pdf)"
+            ],
+            "baton.taskid":"000001773fb05f7075d7893e000a0063008a0046",
+            "baton.task.status":"#4285F4:Prêt",
+            "baton.task.url":"<a href=\"http://baton-2:8080/Baton/@@home.html#Tasks/Report/000001773fb05f7075d7893e000a0063008a0046\" target=\"_blank\">000001773fb05f7075d7893e000a0063008a0046</a>",
+            "qc.baton.result":"Success",
+            "status.media":"#37B258:Online",
+            "narrative.text.presence.1":"On-screen text",
+            "burned-in.dialogs.presence":"None",
+            "refresh.baton":"false"
+        },
+        "history":[
+            {
+                "date":1611681263000,
+                "user":"CatDV Worker Node",
+                "action":"Import movie"
+            },
+            {
+                "date":1611681263000,
+                "user":"CatDV Worker Node",
+                "action":"Created by job '002-01_qc_zz_client001_ingest' task 75875"
+            },
+            {
+                "date":1611681263000,
+                "user":"CatDV Worker Node",
+                "action":"Publish to server"
+            },
+            {
+                "date":1611681266000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611681839000,
+                "user":"Web Interface [api_admin]",
+                "action":"(Message repeated 10 times)"
+            },
+            {
+                "date":1611681972000,
+                "user":"CatDV Worker Node",
+                "action":"Updated by job '002-02_qc_zz_client001_proxy_build' task 75897"
+            },
+            {
+                "date":1611681972000,
+                "user":"CatDV Worker Node",
+                "action":"Original import source was /mnt/ATLAS/catdv_poc/dsc/client001/qc/_pret_pour_qc/mylittleponyfriendshi...S-t-x_v1r0.mov"
+            },
+            {
+                "date":1611681972000,
+                "user":"CatDV Worker Node",
+                "action":"Reanalyse Media"
+            },
+            {
+                "date":1611681973000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611682343000,
+                "user":"Web Interface [api_admin]",
+                "action":"(Message repeated 9 times)"
+            },
+            {
+                "date":1611682349000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611682843000,
+                "user":"Web Interface [api_admin]",
+                "action":"(Message repeated 9 times)"
+            },
+            {
+                "date":1611682905000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611867212000,
+                "user":"Web Interface [api_admin]",
+                "action":"(Message repeated 9 times)"
+            },
+            {
+                "date":1611867212000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611868665000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            },
+            {
+                "date":1611868726000,
+                "user":"Web Interface [api_admin]",
+                "action":"Made changes to clip"
+            }
+        ],
+        "isEditable":true,
+        "dvRecdate":1598462131000,
+        "tapeInfo":null
+    }

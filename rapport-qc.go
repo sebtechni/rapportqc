@@ -7,16 +7,17 @@ import (
 	"html/template"
 	"defaults"
 	"bytes"
+	"encoding/json"
 	// "fmt"
 	"go-wkhtmltopdf"
 	// "encoding/xml"
 	// "time"	
-	// "regexp"		
+	"regexp"		
 	"strings"
 	// "xlsx"	
-	// "os"
+	"os"
 	"strconv"
-	// "path"
+	"path/filepath"
 	//"encoding/json"	
 	// "io/ioutil"	
 	//"os/exec"
@@ -26,6 +27,41 @@ import (
 
 
 )
+
+type CatRest struct {
+	Client		*resty.Client
+	ClipIDs		[]string
+	Endpoint	string
+}
+
+type Fields struct {
+	Titre							string
+	Version							string
+	Provider						string
+	Qc_type							string
+	Validation_type					string		`json:"Validation.type"`
+	Date							string
+	Production_year					string		`json:"production.year"`
+	Qc_operator						string		`json:"qc.operator"`
+	Facility						string		
+	Source_filename					string		`json:"source.filename"`
+	Coordinator						string		
+	Asset_type						string		`json:"asset.type"`
+	Creation_de_rapports			[]string	`json:"création.de.rapports"`
+	Baton_taskid					string		`json:"baton.taskid"`
+	Narrative_text_presence_1		string		`json:"narrative.text.presence.1"`
+	Burnedin_dialogs_presence		string		`json:"burned-in.dialogs.presence"`
+	Nom_original					string		`json:"nom.original"`
+}	
+
+type Data struct  {
+	Name		string
+	Fields		Fields
+}
+
+type CatDV struct  {
+	Data		Data
+}
 
 type StartTimeCodeSMPTE struct {
 	Value			string				`xml:"value,attr"`
@@ -113,8 +149,6 @@ type TaskReport struct {
 	Toplevelinfo		Toplevelinfo				`xml:"toplevelinfo"`
 	Streamnode  		[]Streamnode				`xml:"streamnode"`
 }
-//--------------------------------------------------------------------------------------------
-//var TEST string = "LLL"
 
 type QCInfos struct {
 	TITLE					string			`default:" "`
@@ -130,7 +164,7 @@ type QCInfos struct {
 	ASSET_PASS				string			`default:" "`
 	FILE_DATE				string			`default:" "`
 	REV						string			`default:" "`
-	EXT						string			`default:" "`
+	EXT						string			`default:".mov"`
 	FILENAME				string			`default:" "`
 	ASSET_LANG				string			`default:" "`
 	AUDIO_LANG				string			`default:" "`
@@ -259,125 +293,152 @@ type TEXT_ISSUES struct {
 	ISSUETEXT_FIXE				string			`default:" "`
 }
 
-
+//"420127" 420108
 func main() {
-//00000176e33b7de348c2b333000a0063008a0046
-//0000016e3d423cb80b853502000a0063008a0046
-// Ninja : 000001773fad7fcbb1a120a5000a0063008a0046
-// Little pony : 000001773fb05f7075d7893e000a0063008a0046
-	var Baton TaskReport
-	QC := &QCInfos{}
-	if err := defaults.Set(QC); err != nil {
-		panic(err)
-	}
-	QC = Init(QC)
+	
+	CleanChar := regexp.MustCompile("[^a-zA-Z0-9]+")
 
-	xml.Unmarshal(RestCall("000001773fb05f7075d7893e000a0063008a0046"), &Baton)
+	CatInfos := CatRest{Client: resty.New(), ClipIDs: strings.Split(os.Args[1], ","), Endpoint: "http://10.99.139.220:8080/api/9/"}
 
-	for _, Field := range Baton.Streamnode[0].Info.Field {
-		if Field.Name == "MP4::TimeCodeTrack" {
-			QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
-			QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
+	CatInfos.Open()
+	Clips := CatInfos.Get()
+	CatInfos.Delete()
 
+	for _, Clip := range Clips {
+		var Baton TaskReport
+		QC := &QCInfos{}
+		if err := defaults.Set(QC); err != nil {
+			panic(err)
 		}
-		if Field.Name == "FileSize" {
-			Size, _ := strconv.Atoi(Field.Value)
-			QC.FILESIZE = ByteToMB(Size)
+		QC = Init(QC)
+
+		var InfosCatDV CatDV
+		err := json.Unmarshal(Clip, &InfosCatDV)
+		if err != nil {
+			log.Println("JSON error:", err)
 		}
-		if Field.Name == "Container::Bitrate" {			
-			QC.BITRATE = Field.Value
-		}
-	}
-	for _, Field := range Baton.Streamnode[1].Info.Field {		
-		if Field.Name == "Frame Rate" {			
-			QC.DIF_RATE = Field.Value
-		}
-		if Field.Name == "Resolution" {			
-			QC.RESOLUTION = Field.Value
-		}
-		if Field.Name == "ProresCodecType" {			
-			QC.CODEC = Field.Value
-		}
-		if Field.Name == "Sample Aspect Ratio" {			
-			QC.PXLRATIO = Field.Value
-		}
-		if Field.Name == "Bits Per Pixel" {			
-			QC.VID_BIT = Field.ChromaBitDepth.Value+" bits"
-		}
-		if Field.Name == "Chroma Format" {				
-			QC.COLORSAMPLE = Field.Value
-		}
-	}	
-	for _, Field := range Baton.Streamnode[2].Info.Field {		
-		if Field.Name == "Sampling Frequency" {	
-			Sample, _ := strconv.Atoi(Field.Value)			
-			QC.AUDIOSAMPLE = strconv.Itoa(Sample/1000)+" KHz"
-		}
-		if Field.Name == "Bits per sample" {			
-			QC.AUDIO_BIT = Field.Value+" bits"
-		}
-		if Field.Name == "Audio Channels" {			
-			if Field.Value == "2" {
-				QC.DIF_CH[1] = "STEREO LEFT"
-				QC.DIF_CH[2] = "STEREO RIGHT"
-			} else {
-				QC.DIF_CH[1] = "5.1 LEFT"
-				QC.DIF_CH[2] = "5.1 RIGHT"
-				QC.DIF_CH[3] = "5.1 CENTER"
-				QC.DIF_CH[4] = "5.1 CENTER"
-				QC.DIF_CH[5] = "5.1 LEFT SURROUND"
-				QC.DIF_CH[6] = "5.1 RIGHT SURROUND"
-				QC.DIF_CH[7] = "LEFT TOTAL"
-				QC.DIF_CH[8] = "RIGHT TOTAL"
+		
+		QC.TITLE = InfosCatDV.Data.Fields.Titre
+		QC.PROVIDER = InfosCatDV.Data.Fields.Provider
+		QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type
+		QC.ASSET = InfosCatDV.Data.Fields.Asset_type
+		QC.DATE = InfosCatDV.Data.Fields.Date
+		QC.YEAR	= InfosCatDV.Data.Fields.Production_year
+		QC.OPERATOR = InfosCatDV.Data.Fields.Qc_operator
+		QC.SOURCE_FILENAME = InfosCatDV.Data.Fields.Source_filename
+		QC.FILENAME = InfosCatDV.Data.Fields.Nom_original
+		QC.TEXT_PRES = InfosCatDV.Data.Fields.Narrative_text_presence_1
+		QC.SUB_PRES = InfosCatDV.Data.Fields.Burnedin_dialogs_presence	
+
+		xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
+		for _, Field := range Baton.Streamnode[0].Info.Field {
+			if Field.Name == "MP4::TimeCodeTrack" {
+				QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
+				QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
+
+			}
+			if Field.Name == "FileSize" {
+				Size, _ := strconv.Atoi(Field.Value)
+				QC.FILESIZE = ByteToMB(Size)
+			}
+			if Field.Name == "Container::Bitrate" {			
+				QC.BITRATE = Field.Value
 			}
 		}
-	}
-	ErrorIDX := 0
-	for _, Error := range Baton.Streamnode[1].Errors.Customchecks.Decodedvideochecks.Error {
-		QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
-		QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 		= Error.Item
-		QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
-		QC.PRIM_ISSUES[ErrorIDX].ISVIDEO_PRIM 		= "x"
-		QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
-		ErrorIDX++
-	}
-	
-	for _, Node := range Baton.Streamnode {
-		if Node.Name == "LPCM Audio" {			 
-			for _, Error := range Node.Errors.Customchecks.Decodedaudiochecks.Error {
-				QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
-				QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
-				QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
-				QC.PRIM_ISSUES[ErrorIDX].ISAUDIO_PRIM 		= "x"
-				QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
-				QC.PRIM_ISSUES[ErrorIDX].CHAN_PRIM 			= Node.Id
-				ErrorIDX++
+		for _, Field := range Baton.Streamnode[1].Info.Field {		
+			if Field.Name == "Frame Rate" {			
+				QC.DIF_RATE = Field.Value
+			}
+			if Field.Name == "Resolution" {			
+				QC.RESOLUTION = Field.Value
+			}
+			if Field.Name == "ProresCodecType" {			
+				QC.CODEC = Field.Value
+			}
+			if Field.Name == "Sample Aspect Ratio" {			
+				QC.PXLRATIO = Field.Value
+			}
+			if Field.Name == "Bits Per Pixel" {			
+				QC.VID_BIT = Field.ChromaBitDepth.Value+" bits"
+			}
+			if Field.Name == "Chroma Format" {				
+				QC.COLORSAMPLE = Field.Value
+			}
+		}	
+		for _, Field := range Baton.Streamnode[2].Info.Field {		
+			if Field.Name == "Sampling Frequency" {	
+				Sample, _ := strconv.Atoi(Field.Value)			
+				QC.AUDIOSAMPLE = strconv.Itoa(Sample/1000)+" KHz"
+			}
+			if Field.Name == "Bits per sample" {			
+				QC.AUDIO_BIT = Field.Value+" bits"
+			}
+			if Field.Name == "Audio Channels" {			
+				if Field.Value == "2" {
+					QC.DIF_CH[1] = "STEREO LEFT"
+					QC.DIF_CH[2] = "STEREO RIGHT"
+				} else {
+					QC.DIF_CH[1] = "5.1 LEFT"
+					QC.DIF_CH[2] = "5.1 RIGHT"
+					QC.DIF_CH[3] = "5.1 CENTER"
+					QC.DIF_CH[4] = "5.1 CENTER"
+					QC.DIF_CH[5] = "5.1 LEFT SURROUND"
+					QC.DIF_CH[6] = "5.1 RIGHT SURROUND"
+					QC.DIF_CH[7] = "LEFT TOTAL"
+					QC.DIF_CH[8] = "RIGHT TOTAL"
+				}
 			}
 		}
+		ErrorIDX := 0
+		for _, Error := range Baton.Streamnode[1].Errors.Customchecks.Decodedvideochecks.Error {
+			QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+			QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
+			QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+			QC.PRIM_ISSUES[ErrorIDX].ISVIDEO_PRIM 		= "x"
+			QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+			ErrorIDX++
+		}
+		
+		for _, Node := range Baton.Streamnode {
+			if Node.Name == "LPCM Audio" {			 
+				for _, Error := range Node.Errors.Customchecks.Decodedaudiochecks.Error {
+					QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+					QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
+					QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+					QC.PRIM_ISSUES[ErrorIDX].ISAUDIO_PRIM 		= "x"
+					QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+					QC.PRIM_ISSUES[ErrorIDX].CHAN_PRIM 			= Node.Id
+					ErrorIDX++
+				}
+			}
+		}
+
+
+		//QC.RUN_TIME = Baton.
+		//log.Println(Baton)
+		var Template *template.Template
+		ex, _ := os.Executable()
+		if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {
+			Template = template.Must(template.ParseFiles(filepath.Dir(ex)+"/qc_report.tmpl"))
+		} else if os.IsNotExist(err) {
+			Template = template.Must(template.ParseFiles("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl"))
+		}
+		
+		var tpl bytes.Buffer
+		if err := Template.Execute(&tpl, QC); err != nil {
+			log.Println(err)
+		}
+		RapportFinal := tpl.String()
+
+		PDF(RapportFinal, CleanChar.ReplaceAllString(strings.ToLower(InfosCatDV.Data.Fields.Titre),"_"))
+		log.Println("PDF is OUT!")
+		//lib.WriteHTML()
+
+		//log.Println(TEST)
 	}
-
-
-	//QC.RUN_TIME = Baton.
-	//log.Println(Baton)
-
-	
-	Template := template.Must(template.ParseFiles("C:/Users/daudels/go/src/template_test/qc_report_for_test.tmpl"))
-	//fmt.Println(Template.Execute(os.Stdout, QC))
-	
-	var tpl bytes.Buffer
-	if err := Template.Execute(&tpl, QC); err != nil {
-		log.Println(err)
-	}
-	RapportFinal := tpl.String()
-
-	PDF(RapportFinal)
-	log.Println("PDF is OUT!")
-	//lib.WriteHTML()
-
-	//log.Println(TEST)
 }
 
-func RestCall(BatonTaskId string) []byte {
+func BatonRestCall(BatonTaskId string) []byte {
 	client := resty.New()
 	resp, _ := client.R().
 		SetBasicAuth("dev_user", "jhg45W&sd_18").
@@ -387,16 +448,15 @@ func RestCall(BatonTaskId string) []byte {
 		//fmt.Println(resp.String())
 		//fmt.Println(reflect.TypeOf(resp.String()))
 	return []byte(resp.String())
-
 }
 
-func PDF(HTMLRapport string) {
+func PDF(HTMLRapport, Filename string) {
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 	  log.Fatal(err)
 	}
 
-	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/PDF_JEUDI.pdf"
+	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/"+Filename+"_qc_report.pdf"
 	
 	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(HTMLRapport)))
 
@@ -440,4 +500,23 @@ func Scale(BatonScale string) string {
 		default:
 			return "FYI"			
 	}
+}
+
+func (CatInfos CatRest) Open() {
+	CatInfos.Client.R().Get(CatInfos.Endpoint+"session?usr=api_admin&pwd=Brute-Fence8-Backboned")
+}
+
+func (CatInfos CatRest) Get() [][]byte {
+	var ClipsBody [][]byte
+	for _,Clip := range CatInfos.ClipIDs {
+		resp, _ := CatInfos.Client.R().Get(CatInfos.Endpoint+"clips/"+Clip)
+		
+		ClipsBody = append(ClipsBody, resp.Body())
+	}
+	return ClipsBody
+}
+
+func (CatInfos CatRest) Delete() {
+	CatInfos.Client.R().	
+		Delete(CatInfos.Endpoint+"session")
 }

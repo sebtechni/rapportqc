@@ -9,6 +9,7 @@ import (
 	"log"
 	"io/ioutil"	
 	"strings"
+	"bytes"
 	
 )
 
@@ -83,6 +84,19 @@ func main() {
 	fmt.Println(tdeux.Execute(os.Stdout, test[0]))
 	
 	fmt.Println(ttrois.Execute(os.Stdout, testArrayStruc))
+
+	fmt.Println("TROISS:")
+	fmt.Sprint("what",ttrois.Execute(os.Stdout, testArrayStruc))
+
+	var tpl bytes.Buffer
+	if err := ttrois.Execute(&tpl, testArrayStruc); err != nil {
+		log.Println(err)
+	}
+	
+	result := tpl.String()
+
+	fmt.Println("-----------------------")
+	fmt.Println(result)
 	
 	// ----------------------- GEN STRUCT
 	fmt.Println("-----------------------")
