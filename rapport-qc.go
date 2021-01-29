@@ -454,9 +454,12 @@ func PDF(HTMLRapport, Filename string) {
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 	  log.Fatal(err)
+	}	
+	if _, err := os.Stat("/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv"); err == nil {
+		pdfg.OutputFile = "/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv/"+Filename+"_qc_report.pdf"
+	} else if os.IsNotExist(err) {
+		pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/"+Filename+"_qc_report.pdf"
 	}
-
-	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/"+Filename+"_qc_report.pdf"
 	
 	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(HTMLRapport)))
 
