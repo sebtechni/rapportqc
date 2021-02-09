@@ -23,3 +23,41 @@ http://10.99.139.220:8080/api/9/clips/420127;jsessionid="1E5789665F2B0D7EEE345F1
 //0000016e3d423cb80b853502000a0063008a0046
 // Ninja : 000001773fad7fcbb1a120a5000a0063008a0046
 // Little pony : 000001773fb05f7075d7893e000a0063008a0046
+
+
+https://catdv01.tcsmtlprod.covitec.com/catdv/clip-details.jsp?id=420127
+Brute-Fence8-Backboned
+
+
+
+
+scp username@b:/path/to/file /path/to/destination
+
+scp daudelins@10.99.139.143:/home/daudelins/my_little_pony_qc_report.pdf C:\Users\daudels\
+
+
+scp daudelins@10.99.139.143:/mnt/ATLAS/catdv_poc/dsc/client001/qc/rapports/rocky12_qc_report.pdf C:\Users\daudels\
+
+
+
+\\sshfs\daudelins@10.99.139.143
+
+
+
+
+_, err := os.Stat("/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv"); err == nil {
+		pdfg.OutputFile = "/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv/"+Filename+"_qc_report.pdf"
+	} else if
+go env
+$env:GOOS = "linux"
+go build C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
+
+
+scp C:\Users\daudels\rapport-qc daudelins@10.99.139.143:/home/daudelins
+
+scp C:\Users\daudels\qc_report.tmpl daudelins@10.99.139.143:/home/daudelins
+
+
+
+go build -ldflags="-X main.Build='1250'" C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
+	
