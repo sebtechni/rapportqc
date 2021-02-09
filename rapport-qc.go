@@ -8,24 +8,28 @@ import (
 	"defaults"
 	"bytes"
 	"encoding/json"
-	// "fmt"
 	"go-wkhtmltopdf"
-	// "encoding/xml"
-	// "time"	
 	"regexp"		
 	"strings"
-	// "xlsx"	
 	"os"
 	"strconv"
 	"path/filepath"
+	"rapport-qc/lib"
+
 	//"encoding/json"	
 	// "io/ioutil"	
 	//"os/exec"
 	//"net/http"
 	// "reflect"
 	//"rapport-qc/lib"
+	// "encoding/xml"
+	// "time"	
+	// "fmt"
 
+)
 
+var (    
+	Build    string = ""
 )
 
 type CatRest struct {
@@ -36,10 +40,13 @@ type CatRest struct {
 
 type Fields struct {
 	Titre							string
+	Distributeur					string
 	Version							string
+	Saison							string
+	Episode							string
+	Qc_type							string		`json:"qc.type"`
 	Provider						string
-	Qc_type							string
-	Validation_type					string		`json:"Validation.type"`
+	Validation_type					string		`json:"validation.type"`
 	Date							string
 	Production_year					string		`json:"production.year"`
 	Qc_operator						string		`json:"qc.operator"`
@@ -47,11 +54,15 @@ type Fields struct {
 	Source_filename					string		`json:"source.filename"`
 	Coordinator						string		
 	Asset_type						string		`json:"asset.type"`
-	Creation_de_rapports			[]string	`json:"création.de.rapports"`
+//	Creation_de_rapports			[]string	`json:"création.de.rapports"`
 	Baton_taskid					string		`json:"baton.taskid"`
 	Narrative_text_presence_1		string		`json:"narrative.text.presence.1"`
 	Burnedin_dialogs_presence		string		`json:"burned-in.dialogs.presence"`
+	Text_language					string		`json:"text.language"`
 	Nom_original					string		`json:"nom.original"`
+	Commentaires_generaux			string		`json:"commentaires.généraux"`
+	Commentaires_packaging			string		`json:"commentaires.packaging"`
+	Aspect_ratio					string		`json:"aspect.ratio"`
 }	
 
 type Data struct  {
@@ -152,6 +163,7 @@ type TaskReport struct {
 
 type QCInfos struct {
 	TITLE					string			`default:" "`
+
 	PROVIDER				string			`default:" "`
 	VALIDATION_TYPE			string			`default:" "`
 	VERSION					string			`default:" "`
@@ -295,152 +307,169 @@ type TEXT_ISSUES struct {
 
 //"420127" 420108
 func main() {	
+	
 	CleanChar := regexp.MustCompile("[^a-zA-Z0-9]+")
 	if len(os.Args) < 2 {
-		log.Println("No Clip ID provided.")
+		log.Println("Il faut un argument.")
 	} else {
-		CatInfos := CatRest{Client: resty.New(), ClipIDs: strings.Split(os.Args[1], ","), Endpoint: "http://10.99.139.220:8080/api/9/"}
+		switch os.Args[1] {
+			case "v":
+				log.Println(Build)
+			default:	
+				if len(os.Args[1]) > 5 {
+					CatInfos := CatRest{Client: resty.New(), ClipIDs: strings.Split(os.Args[1], ","), Endpoint: "http://10.99.139.220:8080/api/9/"}
 
-		CatInfos.Open()
-		Clips := CatInfos.Get()
-		CatInfos.Delete()
+					CatInfos.Open()
+					Clips := CatInfos.Get()
+					CatInfos.Delete()
 
-		for _, Clip := range Clips {
-			var Baton TaskReport
-			QC := &QCInfos{}
-			if err := defaults.Set(QC); err != nil {
-				panic(err)
-			}
-			QC = Init(QC)
+					for _, Clip := range Clips {
+						var Baton TaskReport
+						QC := &QCInfos{}
+						if err := defaults.Set(QC); err != nil {
+							panic(err)
+						}
+						QC = Init(QC)
 
-			var InfosCatDV CatDV
-			err := json.Unmarshal(Clip, &InfosCatDV)
-			if err != nil {
-				log.Println("JSON error:", err)
-			}
-			
-			QC.TITLE = InfosCatDV.Data.Fields.Titre
-			QC.PROVIDER = InfosCatDV.Data.Fields.Provider
-			QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type
-			QC.ASSET = InfosCatDV.Data.Fields.Asset_type
-			QC.DATE = InfosCatDV.Data.Fields.Date
-			QC.YEAR	= InfosCatDV.Data.Fields.Production_year
-			QC.OPERATOR = InfosCatDV.Data.Fields.Qc_operator
-			QC.SOURCE_FILENAME = InfosCatDV.Data.Fields.Source_filename
-			QC.FILENAME = InfosCatDV.Data.Fields.Nom_original
-			QC.TEXT_PRES = InfosCatDV.Data.Fields.Narrative_text_presence_1
-			QC.SUB_PRES = InfosCatDV.Data.Fields.Burnedin_dialogs_presence	
+						var InfosCatDV CatDV
+						err := json.Unmarshal(Clip, &InfosCatDV)
+						if err != nil {
+							log.Println("JSON error:", err)
+						}
+						
+						QC.TITLE = InfosCatDV.Data.Fields.Titre
+						QC.AUDIO_LANG = lib.Locale(InfosCatDV.Data.Fields.Nom_original)
+						QC.PROVIDER = InfosCatDV.Data.Fields.Provider
+						QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type
+						QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
+						QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
+						QC.ASSET = InfosCatDV.Data.Fields.Asset_type
+						QC.DATE = InfosCatDV.Data.Fields.Date
+						QC.YEAR	= InfosCatDV.Data.Fields.Production_year
+						QC.OPERATOR = InfosCatDV.Data.Fields.Qc_operator
+						QC.SOURCE_FILENAME = InfosCatDV.Data.Fields.Source_filename
+						QC.FILENAME = InfosCatDV.Data.Fields.Nom_original
+						QC.TEXT_PRES = InfosCatDV.Data.Fields.Narrative_text_presence_1
+						QC.SUB_LANG = InfosCatDV.Data.Fields.Text_language
+						QC.SUB_PRES = InfosCatDV.Data.Fields.Burnedin_dialogs_presence	
+						QC.GENCOM.GENCOM_VALUE[1] = InfosCatDV.Data.Fields.Commentaires_generaux
+						QC.MODIF_FROM_SOURCE = InfosCatDV.Data.Fields.Commentaires_packaging
+						QC.RATIO = InfosCatDV.Data.Fields.Aspect_ratio
 
-			xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
-			for _, Field := range Baton.Streamnode[0].Info.Field {
-				if Field.Name == "MP4::TimeCodeTrack" {
-					QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
-					QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
 
-				}
-				if Field.Name == "FileSize" {
-					Size, _ := strconv.Atoi(Field.Value)
-					QC.FILESIZE = ByteToMB(Size)
-				}
-				if Field.Name == "Container::Bitrate" {			
-					QC.BITRATE = Field.Value
-				}
-			}
-			for _, Field := range Baton.Streamnode[1].Info.Field {		
-				if Field.Name == "Frame Rate" {			
-					QC.DIF_RATE = Field.Value
-				}
-				if Field.Name == "Resolution" {			
-					QC.RESOLUTION = Field.Value
-				}
-				if Field.Name == "ProresCodecType" {			
-					QC.CODEC = Field.Value
-				}
-				if Field.Name == "Sample Aspect Ratio" {			
-					QC.PXLRATIO = Field.Value
-				}
-				if Field.Name == "Bits Per Pixel" {			
-					QC.VID_BIT = Field.ChromaBitDepth.Value+" bits"
-				}
-				if Field.Name == "Chroma Format" {				
-					QC.COLORSAMPLE = Field.Value
-				}
-			}	
-			for _, Field := range Baton.Streamnode[2].Info.Field {		
-				if Field.Name == "Sampling Frequency" {	
-					Sample, _ := strconv.Atoi(Field.Value)			
-					QC.AUDIOSAMPLE = strconv.Itoa(Sample/1000)+" KHz"
-				}
-				if Field.Name == "Bits per sample" {			
-					QC.AUDIO_BIT = Field.Value+" bits"
-				}
-				if Field.Name == "Audio Channels" {			
-					if Field.Value == "2" {
-						QC.DIF_CH[1] = "STEREO LEFT"
-						QC.DIF_CH[2] = "STEREO RIGHT"
-					} else {
-						QC.DIF_CH[1] = "5.1 LEFT"
-						QC.DIF_CH[2] = "5.1 RIGHT"
-						QC.DIF_CH[3] = "5.1 CENTER"
-						QC.DIF_CH[4] = "5.1 CENTER"
-						QC.DIF_CH[5] = "5.1 LEFT SURROUND"
-						QC.DIF_CH[6] = "5.1 RIGHT SURROUND"
-						QC.DIF_CH[7] = "LEFT TOTAL"
-						QC.DIF_CH[8] = "RIGHT TOTAL"
+						xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
+						for _, Field := range Baton.Streamnode[0].Info.Field {
+							if Field.Name == "MP4::TimeCodeTrack" {
+								QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
+								QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
+
+							}
+							if Field.Name == "FileSize" {
+								Size, _ := strconv.Atoi(Field.Value)
+								QC.FILESIZE = ByteToMB(Size)
+							}
+							if Field.Name == "Container::Bitrate" {			
+								QC.BITRATE = Field.Value
+							}
+						}
+						for _, Field := range Baton.Streamnode[1].Info.Field {		
+							if Field.Name == "Frame Rate" {			
+								QC.DIF_RATE = Field.Value
+							}
+							if Field.Name == "Resolution" {			
+								QC.RESOLUTION = Field.Value
+							}
+							if Field.Name == "ProresCodecType" {			
+								QC.CODEC = Field.Value
+							}
+							if Field.Name == "Sample Aspect Ratio" {			
+								QC.PXLRATIO = Field.Value
+							}
+							if Field.Name == "Bits Per Pixel" {			
+								QC.VID_BIT = Field.ChromaBitDepth.Value+" bits"
+							}
+							if Field.Name == "Chroma Format" {				
+								QC.COLORSAMPLE = Field.Value
+							}
+						}	
+						for _, Field := range Baton.Streamnode[2].Info.Field {		
+							if Field.Name == "Sampling Frequency" {	
+								Sample, _ := strconv.Atoi(Field.Value)			
+								QC.AUDIOSAMPLE = strconv.Itoa(Sample/1000)+" KHz"
+							}
+							if Field.Name == "Bits per sample" {			
+								QC.AUDIO_BIT = Field.Value+" bits"
+							}
+							if Field.Name == "Audio Channels" {			
+								if Field.Value == "2" {
+									QC.DIF_CH[1] = "STEREO LEFT"
+									QC.DIF_CH[2] = "STEREO RIGHT"
+								} else {
+									QC.DIF_CH[1] = "5.1 LEFT"
+									QC.DIF_CH[2] = "5.1 RIGHT"
+									QC.DIF_CH[3] = "5.1 CENTER"
+									QC.DIF_CH[4] = "5.1 CENTER"
+									QC.DIF_CH[5] = "5.1 LEFT SURROUND"
+									QC.DIF_CH[6] = "5.1 RIGHT SURROUND"
+									QC.DIF_CH[7] = "LEFT TOTAL"
+									QC.DIF_CH[8] = "RIGHT TOTAL"
+								}
+							}
+						}
+						ErrorIDX := 0
+						for _, Error := range Baton.Streamnode[1].Errors.Customchecks.Decodedvideochecks.Error {
+							QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+							QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
+							QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+							QC.PRIM_ISSUES[ErrorIDX].ISVIDEO_PRIM 		= "x"
+							QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+							ErrorIDX++
+						}
+						
+						for _, Node := range Baton.Streamnode {
+							if Node.Name == "LPCM Audio" {			 
+								for _, Error := range Node.Errors.Customchecks.Decodedaudiochecks.Error {
+									QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
+									QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
+									QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
+									QC.PRIM_ISSUES[ErrorIDX].ISAUDIO_PRIM 		= "x"
+									QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
+									QC.PRIM_ISSUES[ErrorIDX].CHAN_PRIM 			= Node.Id
+									ErrorIDX++
+								}
+							}
+						}
+
+
+						//QC.RUN_TIME = Baton.
+						//log.Println(Baton)
+						var Template *template.Template
+						ex, _ := os.Executable()
+						if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {
+							Template = template.Must(template.ParseFiles(filepath.Dir(ex)+"/qc_report.tmpl"))
+						} else if os.IsNotExist(err) {
+							Template = template.Must(template.ParseFiles("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl"))
+						}
+						
+						var tpl bytes.Buffer
+						if err := Template.Execute(&tpl, QC); err != nil {
+							log.Println(err)
+						}
+						RapportFinal := tpl.String()
+
+						PDF(RapportFinal, CleanChar.ReplaceAllString(QC.FILENAME[:len(QC.FILENAME)-4],"_"))			
+						//lib.WriteHTML()
+
+						//log.Println(TEST)
 					}
-				}
+				} else {log.Println("ClipID invalide.")}	
 			}
-			ErrorIDX := 0
-			for _, Error := range Baton.Streamnode[1].Errors.Customchecks.Decodedvideochecks.Error {
-				QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
-				QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
-				QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
-				QC.PRIM_ISSUES[ErrorIDX].ISVIDEO_PRIM 		= "x"
-				QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
-				ErrorIDX++
-			}
-			
-			for _, Node := range Baton.Streamnode {
-				if Node.Name == "LPCM Audio" {			 
-					for _, Error := range Node.Errors.Customchecks.Decodedaudiochecks.Error {
-						QC.PRIM_ISSUES[ErrorIDX].DIF_TC_PRIM 		= Error.Startsmptetimecode
-						QC.PRIM_ISSUES[ErrorIDX].DESC_PRIM 			= Error.Item
-						QC.PRIM_ISSUES[ErrorIDX].DURATION_PRIM  	= Error.SMPTETimecodeDuration
-						QC.PRIM_ISSUES[ErrorIDX].ISAUDIO_PRIM 		= "x"
-						QC.PRIM_ISSUES[ErrorIDX].SCALE_PRIM 		= Scale(Error.Severity)
-						QC.PRIM_ISSUES[ErrorIDX].CHAN_PRIM 			= Node.Id
-						ErrorIDX++
-					}
-				}
-			}
-
-
-			//QC.RUN_TIME = Baton.
-			//log.Println(Baton)
-			var Template *template.Template
-			ex, _ := os.Executable()
-			if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {
-				Template = template.Must(template.ParseFiles(filepath.Dir(ex)+"/qc_report.tmpl"))
-			} else if os.IsNotExist(err) {
-				Template = template.Must(template.ParseFiles("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl"))
-			}
-			
-			var tpl bytes.Buffer
-			if err := Template.Execute(&tpl, QC); err != nil {
-				log.Println(err)
-			}
-			RapportFinal := tpl.String()
-
-			PDF(RapportFinal, CleanChar.ReplaceAllString(strings.ToLower(InfosCatDV.Data.Fields.Titre),"_"))			
-			//lib.WriteHTML()
-
-			//log.Println(TEST)
 		}
-	}
 }
 
 func BatonRestCall(BatonTaskId string) []byte {
 	client := resty.New()
+	client.SetDisableWarn(true)
 	resp, err := client.R().
 		SetBasicAuth("dev_user", "jhg45W&sd_18").
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").		
@@ -459,16 +488,16 @@ func PDF(HTMLRapport, Filename string) {
 	if err != nil {
 	  log.Fatal(err)
 	}	
-	if _, err := os.Stat("/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv"); err == nil {
-		pdfg.OutputFile = "/mnt/SOLO/services_medias/01_dsc/02_qc/_rapports_pdf/rapports_catdv/"+Filename+"_qc_report.pdf"
-	} else if _, err = os.Stat("C:/Users/daudels/go/src/template_test/"); err == nil {
+	
+	if _, err = os.Stat("C:/Users/daudels/go/src/template_test/"); err == nil {
 		pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/"+Filename+"_qc_report.pdf"
 	} else if os.IsNotExist(err) {		
-		pdfg.OutputFile = "./"+Filename+"_qc_report.pdf"
+		pdfg.OutputFile = "/data/"+Filename+"_qc_report.pdf"
 	}
 	
-	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(HTMLRapport)))
-
+	page := wkhtmltopdf.NewPageReader(strings.NewReader(HTMLRapport))
+	page.Zoom.Set(1.05)
+	pdfg.AddPage(page)
 	err = pdfg.Create()
 	if err != nil {
 		log.Fatal(err)
@@ -494,7 +523,7 @@ func Init(QCChamps *QCInfos) *QCInfos {
 		QCChamps.TEXT_ISSUES = append(QCChamps.TEXT_ISSUES, TEXT_ISSUES{" "," "," "," "," "," "," "})
 	}	
 	return QCChamps
-	}
+}
 
 func ByteToMB(b int) int {
 	return (b/(1024*1024))
@@ -514,15 +543,22 @@ func Scale(BatonScale string) string {
 }
 
 func (CatInfos CatRest) Open() {
-	CatInfos.Client.R().Get(CatInfos.Endpoint+"session?usr=api_admin&pwd=Brute-Fence8-Backboned")
+	_, err :=CatInfos.Client.R().Get(CatInfos.Endpoint+"session?usr=api_admin&pwd=Brute-Fence8-Backboned")
+		if err != nil {
+			log.Fatal("Erreur de connexion à CatDV.")
+		}
 }
 
 func (CatInfos CatRest) Get() [][]byte {
 	var ClipsBody [][]byte
-	for _,Clip := range CatInfos.ClipIDs {
-		resp, _ := CatInfos.Client.R().Get(CatInfos.Endpoint+"clips/"+Clip)
+	for _, Clip := range CatInfos.ClipIDs {
+		resp, err := CatInfos.Client.R().Get(CatInfos.Endpoint+"clips/"+Clip)
+		if err == nil {
+			ClipsBody = append(ClipsBody, resp.Body())
+		} else {
+			log.Println("Erreur dans la récupération de clips dans CatDV.")
+		}
 		
-		ClipsBody = append(ClipsBody, resp.Body())
 	}
 	return ClipsBody
 }
@@ -531,3 +567,4 @@ func (CatInfos CatRest) Delete() {
 	CatInfos.Client.R().	
 		Delete(CatInfos.Endpoint+"session")
 }
+

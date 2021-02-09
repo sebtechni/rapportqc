@@ -10,6 +10,7 @@ import (
 	"io/ioutil"	
 	"strings"
 	"bytes"
+	"reflect"
 	
 )
 
@@ -106,12 +107,18 @@ func main() {
 	}
 	fmt.Println("OBJ:",obj)
 
-	//  ----------------------- PDF
+
+
+
+
+
+//  ----------------------- PDF
 	fmt.Println("-----------------------")
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 	  log.Fatal(err)
 	}
+	fmt.Println(reflect.TypeOf(pdfg))
 
 	htmlfile, err := ioutil.ReadFile("C:/Users/daudels/go/src/rapport-qc/template_qc_report.htm")
 	if err != nil {
@@ -140,9 +147,18 @@ func main() {
 	// }
 	// defer htmlfile.Close()
 
-	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/TestPDFGeneratorOutputFile.pdf"
-	
-	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(string(htmlfile))))
+	pdfg.OutputFile = "C:/Users/daudels/go/src/template_test/TestPDFGeneratorOutputFile-au.pdf"
+	//pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(string(htmlfile))))
+	page := wkhtmltopdf.NewPageReader(strings.NewReader(string(htmlfile)))
+	page.Zoom.Set(0.10)
+	fmt.Println(pdfg)
+	//pdfg.page.Args()
+	pdfg.AddPage(page)
+	pdfg.Cover.Zoom.Set(0.10)
+	pdfg.TOC.Zoom.Set(0.10)
+	fmt.Println(pdfg.TOC.Zoom)
+
+	fmt.Println(pdfg.Args())
 
 	err = pdfg.Create()
 	if err != nil {
