@@ -15,9 +15,8 @@ import (
 	"strconv"
 	"path/filepath"
 	"rapport-qc/lib"
+	"io/ioutil"	
 
-	//"encoding/json"	
-	// "io/ioutil"	
 	//"os/exec"
 	//"net/http"
 	// "reflect"
@@ -25,12 +24,25 @@ import (
 	// "encoding/xml"
 	// "time"	
 	// "fmt"
-
 )
 
 var (    
 	Build    string = ""
 )
+
+type Tpl_Version struct {
+	XMLName 	xml.Name	`xml:"html"`
+	Meta		Meta		`xml:"meta"`
+}
+
+type Meta struct {
+	Version		string	 	`xml:"version,attr"`
+}
+
+type Resolution struct {
+	Nom			string
+	Court		string
+}
 
 type CatRest struct {
 	Client		*resty.Client
@@ -63,6 +75,14 @@ type Fields struct {
 	Commentaires_generaux			string		`json:"commentaires.généraux"`
 	Commentaires_packaging			string		`json:"commentaires.packaging"`
 	Aspect_ratio					string		`json:"aspect.ratio"`
+	Source_audio_ch_1				string		`json:"source.audio.ch.1"`
+	Source_audio_ch_2				string		`json:"source.audio.ch.2"`
+	Source_audio_ch_3				string		`json:"source.audio.ch.3"`
+	Source_audio_ch_4				string		`json:"source.audio.ch.4"`
+	Source_audio_ch_5				string		`json:"source.audio.ch.5"`
+	Source_audio_ch_6				string		`json:"source.audio.ch.6"`
+	Source_audio_ch_7				string		`json:"source.audio.ch.7"`
+	Source_audio_ch_8				string		`json:"source.audio.ch.8"`
 }	
 
 type Data struct  {
@@ -163,7 +183,6 @@ type TaskReport struct {
 
 type QCInfos struct {
 	TITLE					string			`default:" "`
-
 	PROVIDER				string			`default:" "`
 	VALIDATION_TYPE			string			`default:" "`
 	VERSION					string			`default:" "`
@@ -174,6 +193,8 @@ type QCInfos struct {
 	ASSET					string			`default:" "`
 	ASSET_NUM				string			`default:" "`
 	ASSET_PASS				string			`default:" "`
+	NUM01					string			`default:" "`
+	NUM02					string			`default:" "`
 	FILE_DATE				string			`default:" "`
 	REV						string			`default:" "`
 	EXT						string			`default:".mov"`
@@ -198,13 +219,13 @@ type QCInfos struct {
 	AUDIO_BIT				string			`default:" "`
 	VID_BIT					string			`default:" "`
 	V						string			`default:" "`
-	MODIF_FROM_SOURCE		string			`default:" "`
+	MODIF_FROM_SOURCE		string			`default:"N/A"`
 	HEAD_LOGO				HEAD_LOGO
 	TAIL_LOGO				TAIL_LOGO
 	DIF_TC					DIF_TC
 	SRC_TC					SRC_TC
 	DIF_CH					[]string		`default:"[\" \", \" \", \" \",\" \", \" \", \" \", \" \", \" \", \" \"]"`
-	SRC_CH					[]string		`default:"[\" \", \" \", \" \",\" \", \" \", \" \", \" \", \" \", \" \", \" \", \" \",\" \", \" \", \" \", \" \", \" \", \" \", \" \"]"`
+	SRC_CH					[]string		
 	GENCOM					GENCOM
 	PRIM_ISSUES 			[]PRIM_ISSUES	
 	OTT_REJECT				[]OTT_REJECT
@@ -306,8 +327,8 @@ type TEXT_ISSUES struct {
 }
 
 //"420127" 420108
-func main() {	
-	
+func main() {
+	VideoScan := "p"		
 	CleanChar := regexp.MustCompile("[^a-zA-Z0-9]+")
 	if len(os.Args) < 2 {
 		log.Println("Il faut un argument.")
@@ -317,6 +338,30 @@ func main() {
 				log.Println(Build)
 			default:	
 				if len(os.Args[1]) > 5 {
+					log.Println("Rapport-QC v"+Build)
+					var Tpl_File *os.File
+					var Vers Tpl_Version
+					var Template *template.Template
+					ex, _ := os.Executable()
+					if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {						
+						Tpl_File, err = os.Open(filepath.Dir(ex)+"/qc_report.tmpl")
+						if err != nil {
+							log.Println("Un fichier TMPL devrait se trouver au même niveau que l'executable :",err)
+						}
+					} else if os.IsNotExist(err) {						
+						Tpl_File, err = os.Open("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl")
+						if err != nil {
+							log.Println(err)
+						}						
+					}
+					TplByte, err := ioutil.ReadAll(Tpl_File)
+						if err != nil {
+							log.Fatal("Erreur de lecture du template :", err)
+						}
+						xml.Unmarshal(TplByte, &Vers)
+						log.Println("Utilisation du template v"+Vers.Meta.Version)
+						Template = template.Must(template.New("tpl").Parse(string(TplByte)))
+
 					CatInfos := CatRest{Client: resty.New(), ClipIDs: strings.Split(os.Args[1], ","), Endpoint: "http://10.99.139.220:8080/api/9/"}
 
 					CatInfos.Open()
@@ -340,10 +385,20 @@ func main() {
 						QC.TITLE = InfosCatDV.Data.Fields.Titre
 						QC.AUDIO_LANG = lib.Locale(InfosCatDV.Data.Fields.Nom_original)
 						QC.PROVIDER = InfosCatDV.Data.Fields.Provider
-						QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type
-						QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
-						QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
+						QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type						
 						QC.ASSET = InfosCatDV.Data.Fields.Asset_type
+						switch QC.ASSET {
+							case "Episodic":
+								QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
+								QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
+								QC.NUM01 = "Season #"
+								QC.NUM02 = "Episode #"
+							case "Trailer":	
+								QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
+								QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
+								QC.NUM01 = "Trl #"
+								QC.NUM02 = "Pass #"
+						} 				
 						QC.DATE = InfosCatDV.Data.Fields.Date
 						QC.YEAR	= InfosCatDV.Data.Fields.Production_year
 						QC.OPERATOR = InfosCatDV.Data.Fields.Qc_operator
@@ -355,6 +410,7 @@ func main() {
 						QC.GENCOM.GENCOM_VALUE[1] = InfosCatDV.Data.Fields.Commentaires_generaux
 						QC.MODIF_FROM_SOURCE = InfosCatDV.Data.Fields.Commentaires_packaging
 						QC.RATIO = InfosCatDV.Data.Fields.Aspect_ratio
+						QC.SRC_CH = SRCAUDIO(&InfosCatDV.Data.Fields)
 
 
 						xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
@@ -362,7 +418,6 @@ func main() {
 							if Field.Name == "MP4::TimeCodeTrack" {
 								QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
 								QC.DIF_TC.DIF_START_TC = Field.TimeCodeTrack.StartTimeCodeSMPTE.Value
-
 							}
 							if Field.Name == "FileSize" {
 								Size, _ := strconv.Atoi(Field.Value)
@@ -373,8 +428,13 @@ func main() {
 							}
 						}
 						for _, Field := range Baton.Streamnode[1].Info.Field {		
+							if Field.Name == "Picture Scanning Type" {				
+								if Field.Value != "Progressive" {
+									VideoScan = "i"
+								}
+							}
 							if Field.Name == "Frame Rate" {			
-								QC.DIF_RATE = Field.Value
+								QC.DIF_RATE = Field.Value+VideoScan
 							}
 							if Field.Name == "Resolution" {			
 								QC.RESOLUTION = Field.Value
@@ -439,18 +499,7 @@ func main() {
 								}
 							}
 						}
-
-
-						//QC.RUN_TIME = Baton.
-						//log.Println(Baton)
-						var Template *template.Template
-						ex, _ := os.Executable()
-						if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {
-							Template = template.Must(template.ParseFiles(filepath.Dir(ex)+"/qc_report.tmpl"))
-						} else if os.IsNotExist(err) {
-							Template = template.Must(template.ParseFiles("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl"))
-						}
-						
+						QC.VERSION = QC.Version()				
 						var tpl bytes.Buffer
 						if err := Template.Execute(&tpl, QC); err != nil {
 							log.Println(err)
@@ -458,9 +507,7 @@ func main() {
 						RapportFinal := tpl.String()
 
 						PDF(RapportFinal, CleanChar.ReplaceAllString(QC.FILENAME[:len(QC.FILENAME)-4],"_"))			
-						//lib.WriteHTML()
 
-						//log.Println(TEST)
 					}
 				} else {log.Println("ClipID invalide.")}	
 			}
@@ -477,9 +524,7 @@ func BatonRestCall(BatonTaskId string) []byte {
 	if err != nil {
 		log.Fatal("Problème d'accès à Baton...")
 	}
-		
-		//fmt.Println(resp.String())
-		//fmt.Println(reflect.TypeOf(resp.String()))
+	
 	return []byte(resp.String())
 }
 
@@ -502,7 +547,7 @@ func PDF(HTMLRapport, Filename string) {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println("Le rapport QC en PDF a été généré : ",pdfg.OutputFile)
+		log.Println("Le rapport QC en PDF a été généré :",pdfg.OutputFile)
 	}
 }
 
@@ -568,3 +613,79 @@ func (CatInfos CatRest) Delete() {
 		Delete(CatInfos.Endpoint+"session")
 }
 
+func SRCAUDIO(SRC *Fields) []string {
+	audioAss := []string{" ",
+				SRC.Source_audio_ch_1,
+				SRC.Source_audio_ch_2,
+				SRC.Source_audio_ch_3,
+				SRC.Source_audio_ch_4,
+				SRC.Source_audio_ch_5,
+				SRC.Source_audio_ch_6,
+				SRC.Source_audio_ch_7,
+				SRC.Source_audio_ch_8,
+				" "," "," "," "," "," "," "," "," "}
+	return audioAss
+}
+
+func (QC QCInfos) Version() string {
+	var mRes = map[string]Resolution{
+		"3840x2160": Resolution{
+			Nom: "uhd",
+			Court: "UHD",
+		},
+		"1920x1080": Resolution{
+			Nom: "1080",
+			Court: "HD",
+		},
+		"1280x720": Resolution{
+			Nom: "720",
+			Court: "HD",
+		},
+		"1024x576": Resolution{
+			Nom: "pal16",
+			Court: "SD",
+		},
+		"720x480": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"720x486": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"720x576": Resolution{
+			Nom: "pal16",
+			Court: "SD",
+		},
+		"768x576": Resolution{
+			Nom: "pal16",
+			Court: "SD",
+		},
+		"640x480": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"640x486": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"853x480": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"853x486": Resolution{
+			Nom: "ntsc16",
+			Court: "SD",
+		},
+		"2048×1080": Resolution{
+			Nom: "2k",
+			Court: "2K",
+		},
+		"4096x2160": Resolution{
+			Nom: "4k",
+			Court: "4K",
+		},
+	}
+
+	return mRes[QC.RESOLUTION].Court+" "+mRes[QC.RESOLUTION].Nom+" "+QC.RANGE+" "+QC.RATIO+" "+QC.DIF_RATE
+}

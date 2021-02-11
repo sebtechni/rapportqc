@@ -38,6 +38,10 @@ scp daudelins@10.99.139.143:/home/daudelins/my_little_pony_qc_report.pdf C:\User
 
 scp daudelins@10.99.139.143:/mnt/ATLAS/catdv_poc/dsc/client001/qc/rapports/rocky12_qc_report.pdf C:\Users\daudels\
 
+scp C:\Users\daudels\rapport-qc daudelins@10.99.139.143:/home/daudelins
+
+scp C:\Users\daudels\qc_report.tmpl daudelins@10.99.139.143:/home/daudelins
+
 
 
 \\sshfs\daudelins@10.99.139.143
@@ -52,12 +56,5 @@ go env
 $env:GOOS = "linux"
 go build C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
 
-
-scp C:\Users\daudels\rapport-qc daudelins@10.99.139.143:/home/daudelins
-
-scp C:\Users\daudels\qc_report.tmpl daudelins@10.99.139.143:/home/daudelins
-
-
-
-go build -ldflags="-X main.Build='1250'" C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
+go build -ldflags="-X main.Build=21021101" C:\Users\daudels\go\src\rapport-qc\rapport-qc.go
 	
