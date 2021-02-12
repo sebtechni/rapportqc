@@ -27,7 +27,9 @@ import (
 )
 
 var (    
-	Build    string = ""
+	Build   	string = ""
+	tmpl		string = "/qc_report.tmpl"
+	VideoScan	string = "p"
 )
 
 type Tpl_Version struct {
@@ -327,8 +329,7 @@ type TEXT_ISSUES struct {
 }
 
 //"420127" 420108
-func main() {
-	VideoScan := "p"		
+func main() {			
 	CleanChar := regexp.MustCompile("[^a-zA-Z0-9]+")
 	if len(os.Args) < 2 {
 		log.Println("Il faut un argument.")
@@ -339,14 +340,18 @@ func main() {
 			default:	
 				if len(os.Args[1]) > 5 {
 					log.Println("Rapport-QC v"+Build)
-					var Tpl_File *os.File
-					var Vers Tpl_Version
-					var Template *template.Template
 					ex, _ := os.Executable()
-					if _, err := os.Stat(filepath.Dir(ex)+"/qc_report.tmpl"); err == nil {						
-						Tpl_File, err = os.Open(filepath.Dir(ex)+"/qc_report.tmpl")
+					var (
+						Tpl_File *os.File
+					 	Vers Tpl_Version
+						Template *template.Template
+					)					
+					CatInfos := CatRest{resty.New(), strings.Split(os.Args[1], ","), "http://10.99.139.220:8080/api/9/"}
+
+					if _, err := os.Stat(filepath.Dir(ex)+tmpl); err == nil {						
+						Tpl_File, err = os.Open(filepath.Dir(ex)+tmpl)
 						if err != nil {
-							log.Println("Un fichier TMPL devrait se trouver au même niveau que l'executable :",err)
+							log.Println(err)
 						}
 					} else if os.IsNotExist(err) {						
 						Tpl_File, err = os.Open("C:/Users/daudels/go/src/rapport-qc/qc_report.tmpl")
@@ -358,62 +363,30 @@ func main() {
 						if err != nil {
 							log.Fatal("Erreur de lecture du template :", err)
 						}
-						xml.Unmarshal(TplByte, &Vers)
-						log.Println("Utilisation du template v"+Vers.Meta.Version)
-						Template = template.Must(template.New("tpl").Parse(string(TplByte)))
+					xml.Unmarshal(TplByte, &Vers)
+					log.Println("Utilisation du template v"+Vers.Meta.Version)
+					Template = template.Must(template.New("tpl").Parse(string(TplByte)))			
 
-					CatInfos := CatRest{Client: resty.New(), ClipIDs: strings.Split(os.Args[1], ","), Endpoint: "http://10.99.139.220:8080/api/9/"}
-
-					CatInfos.Open()
-					Clips := CatInfos.Get()
-					CatInfos.Delete()
-
-					for _, Clip := range Clips {
-						var Baton TaskReport
-						QC := &QCInfos{}
+					for _, Clip := range CatInfos.CatDV() {
+						var (
+							Baton TaskReport
+							InfosCatDV CatDV
+							tpl bytes.Buffer
+							)
+						QC := Init(&QCInfos{})
 						if err := defaults.Set(QC); err != nil {
 							panic(err)
 						}
-						QC = Init(QC)
-
-						var InfosCatDV CatDV
 						err := json.Unmarshal(Clip, &InfosCatDV)
 						if err != nil {
 							log.Println("JSON error:", err)
 						}
-						
-						QC.TITLE = InfosCatDV.Data.Fields.Titre
-						QC.AUDIO_LANG = lib.Locale(InfosCatDV.Data.Fields.Nom_original)
-						QC.PROVIDER = InfosCatDV.Data.Fields.Provider
-						QC.VALIDATION_TYPE = InfosCatDV.Data.Fields.Validation_type						
-						QC.ASSET = InfosCatDV.Data.Fields.Asset_type
-						switch QC.ASSET {
-							case "Episodic":
-								QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
-								QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
-								QC.NUM01 = "Season #"
-								QC.NUM02 = "Episode #"
-							case "Trailer":	
-								QC.ASSET_NUM = InfosCatDV.Data.Fields.Saison
-								QC.ASSET_PASS = InfosCatDV.Data.Fields.Episode
-								QC.NUM01 = "Trl #"
-								QC.NUM02 = "Pass #"
-						} 				
-						QC.DATE = InfosCatDV.Data.Fields.Date
-						QC.YEAR	= InfosCatDV.Data.Fields.Production_year
-						QC.OPERATOR = InfosCatDV.Data.Fields.Qc_operator
-						QC.SOURCE_FILENAME = InfosCatDV.Data.Fields.Source_filename
-						QC.FILENAME = InfosCatDV.Data.Fields.Nom_original
-						QC.TEXT_PRES = InfosCatDV.Data.Fields.Narrative_text_presence_1
-						QC.SUB_LANG = InfosCatDV.Data.Fields.Text_language
-						QC.SUB_PRES = InfosCatDV.Data.Fields.Burnedin_dialogs_presence	
-						QC.GENCOM.GENCOM_VALUE[1] = InfosCatDV.Data.Fields.Commentaires_generaux
-						QC.MODIF_FROM_SOURCE = InfosCatDV.Data.Fields.Commentaires_packaging
-						QC.RATIO = InfosCatDV.Data.Fields.Aspect_ratio
-						QC.SRC_CH = SRCAUDIO(&InfosCatDV.Data.Fields)
+						FundQC(QC, InfosCatDV.Data.Fields)			
 
-
-						xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
+						err = xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
+						if err != nil {
+							log.Fatal("error baton :", err)							
+						}
 						for _, Field := range Baton.Streamnode[0].Info.Field {
 							if Field.Name == "MP4::TimeCodeTrack" {
 								QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
@@ -500,14 +473,11 @@ func main() {
 							}
 						}
 						QC.VERSION = QC.Version()				
-						var tpl bytes.Buffer
+
 						if err := Template.Execute(&tpl, QC); err != nil {
 							log.Println(err)
 						}
-						RapportFinal := tpl.String()
-
-						PDF(RapportFinal, CleanChar.ReplaceAllString(QC.FILENAME[:len(QC.FILENAME)-4],"_"))			
-
+						PDF(tpl.String(), CleanChar.ReplaceAllString(QC.FILENAME[:len(QC.FILENAME)-4],"_"))
 					}
 				} else {log.Println("ClipID invalide.")}	
 			}
@@ -528,7 +498,7 @@ func BatonRestCall(BatonTaskId string) []byte {
 	return []byte(resp.String())
 }
 
-func PDF(HTMLRapport, Filename string) {
+func PDF(Rapport, Filename string) {
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 	  log.Fatal(err)
@@ -540,7 +510,7 @@ func PDF(HTMLRapport, Filename string) {
 		pdfg.OutputFile = "/data/"+Filename+"_qc_report.pdf"
 	}
 	
-	page := wkhtmltopdf.NewPageReader(strings.NewReader(HTMLRapport))
+	page := wkhtmltopdf.NewPageReader(strings.NewReader(Rapport))
 	page.Zoom.Set(1.05)
 	pdfg.AddPage(page)
 	err = pdfg.Create()
@@ -587,6 +557,46 @@ func Scale(BatonScale string) string {
 	}
 }
 
+func FundQC(QC *QCInfos, Champs Fields) {
+	QC.TITLE = Champs.Titre
+	QC.AUDIO_LANG = lib.Locale(Champs.Nom_original)
+	QC.PROVIDER = Champs.Provider
+	QC.VALIDATION_TYPE = Champs.Validation_type						
+	QC.ASSET = Champs.Asset_type
+	switch QC.ASSET {
+		case "Episodic":
+			QC.ASSET_NUM = Champs.Saison
+			QC.ASSET_PASS = Champs.Episode
+			QC.NUM01 = "Season #"
+			QC.NUM02 = "Episode #"
+		case "Trailer":	
+			QC.ASSET_NUM = Champs.Saison
+			QC.ASSET_PASS = Champs.Episode
+			QC.NUM01 = "Trl #"
+			QC.NUM02 = "Pass #"
+	} 				
+	QC.DATE = Champs.Date
+	QC.YEAR	= Champs.Production_year
+	QC.OPERATOR = Champs.Qc_operator
+	QC.SOURCE_FILENAME = Champs.Source_filename
+	QC.FILENAME = Champs.Nom_original
+	QC.TEXT_PRES = Champs.Narrative_text_presence_1
+	QC.SUB_LANG = Champs.Text_language
+	QC.SUB_PRES = Champs.Burnedin_dialogs_presence	
+	QC.GENCOM.GENCOM_VALUE[1] = Champs.Commentaires_generaux
+	QC.MODIF_FROM_SOURCE = Champs.Commentaires_packaging
+	QC.RATIO = Champs.Aspect_ratio
+	QC.SRC_CH = SRCAUDIO(&Champs)
+}
+
+func (CatInfos CatRest) CatDV() [][]byte {
+	CatInfos.Open()
+	Clips := CatInfos.Get()
+	CatInfos.Delete()
+
+	return Clips
+}
+
 func (CatInfos CatRest) Open() {
 	_, err :=CatInfos.Client.R().Get(CatInfos.Endpoint+"session?usr=api_admin&pwd=Brute-Fence8-Backboned")
 		if err != nil {
@@ -623,7 +633,8 @@ func SRCAUDIO(SRC *Fields) []string {
 				SRC.Source_audio_ch_6,
 				SRC.Source_audio_ch_7,
 				SRC.Source_audio_ch_8,
-				" "," "," "," "," "," "," "," "," "}
+				" "," "," "," "," "," ",
+				" "," "," "}
 	return audioAss
 }
 
