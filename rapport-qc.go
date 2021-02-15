@@ -27,6 +27,7 @@ import (
 )
 
 var (    
+	MetaVers	string = "0.3"
 	Build   	string = ""
 	tmpl		string = "/qc_report.tmpl"
 	VideoScan	string = "p"
@@ -339,7 +340,7 @@ func main() {
 				log.Println(Build)
 			default:	
 				if len(os.Args[1]) > 5 {
-					log.Println("Rapport-QC v"+Build)
+					if Build != "" {log.Println("Rapport-QC v"+Build)}
 					ex, _ := os.Executable()
 					var (
 						Tpl_File *os.File
@@ -364,7 +365,11 @@ func main() {
 							log.Fatal("Erreur de lecture du template :", err)
 						}
 					xml.Unmarshal(TplByte, &Vers)
-					log.Println("Utilisation du template v"+Vers.Meta.Version)
+					if Vers.Meta.Version == MetaVers {
+						log.Println("Utilisation du template v"+Vers.Meta.Version)
+					} else {
+						log.Fatal("La version du template n'est pas bonne.")
+					}
 					Template = template.Must(template.New("tpl").Parse(string(TplByte)))			
 
 					for _, Clip := range CatInfos.CatDV() {
@@ -381,12 +386,13 @@ func main() {
 						if err != nil {
 							log.Println("JSON error:", err)
 						}
-						FundQC(QC, InfosCatDV.Data.Fields)			
+						HeadQC(QC, InfosCatDV.Data.Fields)			
 
 						err = xml.Unmarshal(BatonRestCall(InfosCatDV.Data.Fields.Baton_taskid), &Baton)	
 						if err != nil {
 							log.Fatal("error baton :", err)							
 						}
+
 						for _, Field := range Baton.Streamnode[0].Info.Field {
 							if Field.Name == "MP4::TimeCodeTrack" {
 								QC.RUN_TIME = Field.TimeCodeTrack.DurationSMPTE.Value
@@ -557,36 +563,36 @@ func Scale(BatonScale string) string {
 	}
 }
 
-func FundQC(QC *QCInfos, Champs Fields) {
-	QC.TITLE = Champs.Titre
-	QC.AUDIO_LANG = lib.Locale(Champs.Nom_original)
-	QC.PROVIDER = Champs.Provider
-	QC.VALIDATION_TYPE = Champs.Validation_type						
-	QC.ASSET = Champs.Asset_type
+func HeadQC(QC *QCInfos, fd Fields) {
+	QC.TITLE = fd.Titre
+	QC.AUDIO_LANG = lib.Locale(fd.Nom_original)
+	QC.PROVIDER = fd.Provider
+	QC.VALIDATION_TYPE = fd.Validation_type						
+	QC.ASSET = fd.Asset_type
 	switch QC.ASSET {
 		case "Episodic":
-			QC.ASSET_NUM = Champs.Saison
-			QC.ASSET_PASS = Champs.Episode
+			QC.ASSET_NUM = fd.Saison
+			QC.ASSET_PASS = fd.Episode
 			QC.NUM01 = "Season #"
 			QC.NUM02 = "Episode #"
 		case "Trailer":	
-			QC.ASSET_NUM = Champs.Saison
-			QC.ASSET_PASS = Champs.Episode
+			QC.ASSET_NUM = fd.Saison
+			QC.ASSET_PASS = fd.Episode
 			QC.NUM01 = "Trl #"
 			QC.NUM02 = "Pass #"
 	} 				
-	QC.DATE = Champs.Date
-	QC.YEAR	= Champs.Production_year
-	QC.OPERATOR = Champs.Qc_operator
-	QC.SOURCE_FILENAME = Champs.Source_filename
-	QC.FILENAME = Champs.Nom_original
-	QC.TEXT_PRES = Champs.Narrative_text_presence_1
-	QC.SUB_LANG = Champs.Text_language
-	QC.SUB_PRES = Champs.Burnedin_dialogs_presence	
-	QC.GENCOM.GENCOM_VALUE[1] = Champs.Commentaires_generaux
-	QC.MODIF_FROM_SOURCE = Champs.Commentaires_packaging
-	QC.RATIO = Champs.Aspect_ratio
-	QC.SRC_CH = SRCAUDIO(&Champs)
+	QC.DATE = fd.Date
+	QC.YEAR	= fd.Production_year
+	QC.OPERATOR = fd.Qc_operator
+	QC.SOURCE_FILENAME = fd.Source_filename
+	QC.FILENAME = fd.Nom_original
+	QC.TEXT_PRES = fd.Narrative_text_presence_1
+	QC.SUB_LANG = fd.Text_language
+	QC.SUB_PRES = fd.Burnedin_dialogs_presence	
+	QC.GENCOM.GENCOM_VALUE[1] = fd.Commentaires_generaux
+	QC.MODIF_FROM_SOURCE = fd.Commentaires_packaging
+	QC.RATIO = fd.Aspect_ratio
+	QC.SRC_CH = SRCAUDIO(&fd)
 }
 
 func (CatInfos CatRest) CatDV() [][]byte {
